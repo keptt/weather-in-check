@@ -14,8 +14,8 @@ def main():
     current_date = datetime.date.today()
     tommorow_date = current_date + datetime.timedelta(days=1)
 
-    fc = owm.three_hours_forecast_at_coords()
-    f = fc.get_forecast(default.COORD_X, default.COORD_Y)
+    fc = owm.three_hours_forecast_at_coords(default.COORD_X, default.COORD_Y)
+    f = fc.get_forecast()
 
     #print(type(tommorow_weather.get_reference_time('date')), tommorow_weather.get_status(), tommorow_weather.get_temperature(unit='celsius'))
 
@@ -52,4 +52,4 @@ def main():
     if abs(tommorows_temperature - todays_temprature) > (todays_temprature/100)*15:                                                     #difference in more than 20%//4 degrees
         subject = f'Subject: TEMP DIFF {todays_temprature} vs {tommorows_temperature}'
         message = f'{detailed_report}'
-        sm.send_mail(login=default.SMTP_SEND_FROM, password=defaults.SMTP_PASSWORD, send_to=default.SMTP_SEND_TO, subject=subject, message=message)
+        sm.send_mail(login=default.SMTP_SEND_FROM, password=default.SMTP_PASSWORD, send_to=default.SMTP_SEND_TO, subject=subject, message=message)

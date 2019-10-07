@@ -1,6 +1,6 @@
 import os
 
-TOKEN = os.environ['TOKEN']
+TOKEN = os.environ['TOKEN_OWM']
 PICKLE_FILE = 'pickle.pp'
 SMTP_SERVICE = 'smtp.gmail.com'
 SMTP_PORT = 587

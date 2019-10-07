@@ -1,6 +1,6 @@
 import smtplib
 
-def send_mail(login, password, send_to, subject, message, service=smtp.gmail.com, port=587)
+def send_mail(login, password, send_to, subject, message, service='smtp.gmail.com', port=587):
     smtp_obj = smtplib.SMTP(service, port)
     smtp_obj.ehlo()
     smtp_obj.starttls()
