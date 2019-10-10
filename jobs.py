@@ -6,9 +6,9 @@ import send_mail as sm
 
 sched = BlockingScheduler()
 
-@sched.scheduled_job('cron', day_of_week='mon-fri, sun', hour='0', minute='16', timezone=default.TIMEZONE_STR)
-def query_weather():
-    main()
+# @sched.scheduled_job('cron', day_of_week='mon-fri, sun', hour='0', minute='16', timezone=default.TIMEZONE_STR)
+# def query_weather():
+#     main()
 
 @sched.scheduled_job('cron', day_of_week='mon-fri, sun', hour='23', minute='35', timezone=default.TIMEZONE_STR)
 def send():
