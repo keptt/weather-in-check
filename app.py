@@ -15,7 +15,8 @@ def main():
     tommorow_date = current_date + datetime.timedelta(days=1)
 
     fc = owm.three_hours_forecast_at_coords(default.COORD_X, default.COORD_Y)
-    f = fc.get_forecast()
+    f = fc.get_forecast()                                                       #return list of weather objects that contain weather info mapped with the time of the day when such weathter is to be expected
+    print(f)
 
     #print(type(tommorow_weather.get_reference_time('date')), tommorow_weather.get_status(), tommorow_weather.get_temperature(unit='celsius'))
 
@@ -27,29 +28,37 @@ def main():
 
     detailed_report: str = ''
 
-    for weather in f:
-        date_of_forecast = weather.get_reference_time('date')
+    for weather in f:                                                                   
+        date_of_forecast = weather.get_reference_time('date')                                                       # receive date from weather object
 
         # print('tommorow:')
-        if date_of_forecast.hour > 6 and date_of_forecast.hour < 21 and date_of_forecast.date() == tommorow_date:
+        if date_of_forecast.hour > 6 and date_of_forecast.hour < 21 and date_of_forecast.date() == tommorow_date:   # considering only temperature data from 6 in the morning til 21 o'clock
             # print(weather.get_reference_time('iso'), weather.get_status(), weather.get_temperature(unit='celsius'))
         
             count += 1
-            detailed_report += (' '.join([str(weather.get_reference_time('iso')), str(weather.get_status()), str(weather.get_temperature(unit='celsius')), '\n']))
+            detailed_report += (' '.join([str(weather.get_reference_time('iso')), str(weather.get_status()), str(weather.get_temperature(unit='celsius')), '\n']))  # form report to later send via male.
+                                                                                                                                                                    # contaiins time : status (e g rain, clear, snow...) and tempareture in celcius
             med += weather.get_temperature(unit='celsius')['temp']
 
-
-    if  os.path.exists(os.path.join(os.getcwd(), default.PICKLE_FILE)):  
+    try:
         with open(default.PICKLE_FILE, 'rb') as pickle_handle:
-            todays_temprature = pickle.load(pickle_handle)
-        with open(default.PICKLE_FILE, 'bw') as pickle_handle: 
-            tommorows_temperature = med/count
-            pickle.dump(med/count, pickle_handle)
-        
+            try:
+                todays_temprature = pickle.load(pickle_handle)                                                                              # get todays temperature from pickle. Later we will save tommorows temperature 
+                                                                                                                                            # to pickle and tommorow load this "tommorow" temperature as "today"
+            except EOFError:                                                                                                                # if file was empty
+                todays_temprature = 0
+    except FileNotFoundError:
+            pass
+    with open(default.PICKLE_FILE, 'bw') as pickle_handle: 
+        tommorows_temperature = med/count
+        pickle.dump(med/count, pickle_handle)
+    
+    print('todays_temprature: ', todays_temprature)
+    print('tommorows_temperature: ', tommorows_temperature)
+    print('abs(tommorows_temperature - todays_temprature): ', abs(tommorows_temperature - todays_temprature))
+    print('(todays_temprature/100)*15: ', (todays_temprature/100)*15)
 
-    # print(f'{tommorows_temperature} vs {todays_temprature}  diff = {tommorows_temperature - todays_temprature} 15% = {(todays_temprature/100)*20}')
-
-    if abs(tommorows_temperature - todays_temprature) > (todays_temprature/100)*15:                                                     #difference in more than 20%//4 degrees
+    if abs(tommorows_temperature - todays_temprature) > (todays_temprature/100)*15:                                                     # difference in more than 15%//4 degrees
         subject = f'Subject: TEMP DIFF {todays_temprature} vs {tommorows_temperature}'
-        message = f'{detailed_report}'
-        sm.send_mail(login=default.SMTP_SEND_FROM, password=default.SMTP_PASSWORD, send_to=default.SMTP_SEND_TO, subject=subject, message=message)
+        message = f'Tommorow\'s weather:\n{detailed_report}'
+        sm.send_mail(login=default.SMTP_SEND_FROM, password=default.SMTP_PASSWORD, send_to=[default.SMTP_SEND_TO], subject=subject, message=message)
