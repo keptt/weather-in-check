@@ -48,7 +48,7 @@ def main():
         tommorows_temperature = med/count
         pickle.dump(med/count, pickle_handle)
 
-    if abs(tommorows_temperature - todays_temprature) > (todays_temprature/100)*15:                                                     # difference in more than 15%//4 degrees
-        subject = f'Subject: TEMP DIFF {todays_temprature} vs {tommorows_temperature}'
-        message = f'Tommorow\'s weather:\n{detailed_report}'
-        sm.send_mail(login=default.SMTP_SEND_FROM, password=default.SMTP_PASSWORD, send_to=[default.SMTP_SEND_TO], subject=subject, message=message)
+    # if abs(tommorows_temperature - todays_temprature) > (todays_temprature/100)*15:                                                     # difference in more than 15%//4 degrees
+    subject = f'Subject: TEMP DIFF {todays_temprature} vs {tommorows_temperature}'
+    message = f'Tommorow\'s weather:\n{detailed_report}'
+    sm.send_mail(login=default.SMTP_SEND_FROM, password=default.SMTP_PASSWORD, send_to=[default.SMTP_SEND_TO], subject=subject, message=message)

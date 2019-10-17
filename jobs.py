@@ -12,4 +12,3 @@ def query_weather():
     main()
 
 sched.start()
-
