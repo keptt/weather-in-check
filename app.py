@@ -1,54 +1,55 @@
 import datetime
 import pyowm
-import pickle
-import smtplib
 import os
+from statistics import mean
+from pprint import pformat
 
-import default
-import send_mail as sm
+from modules import default
+from modules import send_mail
+from modules import pickle_routine
+from modules import owm_work
+
+TODADAYS_TEMPERATURE = 0
+
+# def n(l: list):
+#     out: str
+#     for row in l:
+#         row = [str(element) for element in row]
 
 
-def main():
-    owm = pyowm.OWM(default.TOKEN)
-
-    current_date = datetime.date.today()
-    tommorow_date = current_date + datetime.timedelta(days=1)
-
-    fc = owm.three_hours_forecast_at_coords(default.COORD_X, default.COORD_Y)
-    f = fc.get_forecast()                                                       #return list of weather objects that contain weather info mapped with the time of the day when such weathter is to be expected
-
-    med: float = 0
-    count: int = 0
-
+def main(heroku_mode: bool=False):
+    """
+    Keyword Arguments:
+        heroku_mode {bool} -- [description] (default: {False})
+    """    
     todays_temprature: int = 0
     tommorows_temperature: int = 0
+    subject_error: str = ''
 
-    detailed_report: str = ''
+    owm = pyowm.OWM(default.TOKEN)
+    detailed_report = owm_work.get_tomorrows_avg_temp(owm, default.COORD_X, default.COORD_Y)
+    tommorows_temperature = mean([row[len(row)-1]['temp'] for row in detailed_report])                                                         # calculates avg temp for tommorow
+    detailed_report = pformat(detailed_report)
 
-    for weather in f:                                                                   
-        date_of_forecast = weather.get_reference_time('date')                                                       # receive date from weather object
-
-        if date_of_forecast.hour > 6 and date_of_forecast.hour < 21 and date_of_forecast.date() == tommorow_date:   # considering only temperature data from 6 in the morning til 21 o'clock
-        
-            count += 1
-            detailed_report += (' '.join([str(weather.get_reference_time('iso')), str(weather.get_status()), str(weather.get_temperature(unit='celsius')), '\n']))  # form report to later send via male.
-                                                                                                                                                                    # contaiins time : status (e g rain, clear, snow...) and tempareture in celcius
-            med += weather.get_temperature(unit='celsius')['temp']
-
-    try:
-        with open(default.PICKLE_FILE, 'rb') as pickle_handle:
-            try:
-                todays_temprature = pickle.load(pickle_handle)                                                                              # get todays temperature from pickle. Later we will save tommorows temperature 
-                                                                                                                                            # to pickle and tommorow load this "tommorow" temperature as "today"
-            except EOFError:                                                                                                                # if file was empty
-                todays_temprature = 0
-    except FileNotFoundError:
+    if heroku_mode:
+        todays_temprature = TODADAYS_TEMPERATURE
+        TODADAYS_TEMPERATURE = tommorows_temperature
+    else:
+        try:
+            todays_temperature = pickle_routine.pickle_get(default.PICKLE_FILE)                                                                                # get todays temperature from pickle. Later we will save tommorows temperature 
+                                                                                                                                                # to pickle and tommorow load this "tommorow" temperature as "today"                                                                                          
+        except EOFError:                                                                                                                        # if file wasn't found empty                                                                                           
             pass
-    with open(default.PICKLE_FILE, 'bw') as pickle_handle: 
-        tommorows_temperature = med/count
-        pickle.dump(med/count, pickle_handle)
-
+        except FileNotFoundError:
+            subject_error = f' File {default.PICKLE_FILE} not found on filesystem|'
+        try:
+            pickle_routine.pickle_put(default.PICKLE_FILE, tommorows_temperature)
+        except:
+            subject_error += f' Put to {default.PICKLE_FILE} issue|'
     # if abs(tommorows_temperature - todays_temprature) > (todays_temprature/100)*15:                                                     # difference in more than 15%//4 degrees
-    subject = f'Subject: TEMP DIFF {todays_temprature} vs {tommorows_temperature}'
-    message = f'Tommorow\'s weather:\n{detailed_report}'
-    sm.send_mail(login=default.SMTP_SEND_FROM, password=default.SMTP_PASSWORD, send_to=[default.SMTP_SEND_TO], subject=subject, message=message)
+    subject = f'Subject: TEMP DIFF {todays_temprature} vs {tommorows_temperature}' + subject_error
+    message = subject_error + f'Tommorow\'s weather:\n{detailed_report}'
+    send_mail.send_mail(login=default.SMTP_SEND_FROM, password=default.SMTP_PASSWORD, send_to=[default.SMTP_SEND_TO], subject=subject, message=message)
+
+if __name__ == '__main__':
+    main()
