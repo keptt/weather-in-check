@@ -1,6 +1,7 @@
 import datetime
 import pyowm
 import os
+import traceback
 from statistics import mean
 from pprint import pformat
 
@@ -9,15 +10,8 @@ from modules import send_mail
 from modules import pickle_routine
 from modules import owm_work
 
-# TODAYS_TEMPERATURE = 0
 
-# def n(l: list):
-#     out: str
-#     for row in l:
-#         row = [str(element) for element in row]
-
-
-def main(in_todays_temperature, heroku_mode: bool=False):
+def main(in_todays_temperature=0, heroku_mode: bool=False):
     """
     Keyword Arguments:
         heroku_mode {bool} -- [description] (default: {False})
@@ -25,6 +19,7 @@ def main(in_todays_temperature, heroku_mode: bool=False):
     todays_temperature: int = 0
     tommorows_temperature: int = 0
     subject_error: str = ''
+    error_text:str = ''
 
     owm = pyowm.OWM(default.TOKEN)
     detailed_report = owm_work.get_tomorrows_avg_temp(owm, default.COORD_X, default.COORD_Y)
@@ -42,16 +37,21 @@ def main(in_todays_temperature, heroku_mode: bool=False):
             pass
         except FileNotFoundError:
             subject_error = f' File {default.PICKLE_FILE} not found on filesystem|'
+        except:
+            subject_error += f'| Pickle get {default.PICKLE_FILE} issue|'
+            error_text = f'ERROR desc:\n{traceback.format_exc()}'
         try:
             pickle_routine.pickle_put(default.PICKLE_FILE, tommorows_temperature)
         except:
-            subject_error += f' Put to {default.PICKLE_FILE} issue|'
+            subject_error += f'| Put to {default.PICKLE_FILE} issue|'
+            error_text = f'ERROR desc:\n{traceback.format_exc()}'
+
     # if abs(tommorows_temperature - todays_temprature) > (todays_temprature/100)*15:                                                     # difference in more than 15%//4 degrees
     subject = f'Subject: TEMP DIFF {todays_temperature} vs {tommorows_temperature}' + subject_error
-    message = subject_error + f'Tommorow\'s weather:\n{detailed_report}'
+    message = subject_error + f'Tommorow\'s weather:\n{detailed_report}\n' + error_text 
     send_mail.send_mail(login=default.SMTP_SEND_FROM, password=default.SMTP_PASSWORD, send_to=[default.SMTP_SEND_TO], subject=subject, message=message)
 
     return in_todays_temperature
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
