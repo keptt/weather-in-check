@@ -5,16 +5,17 @@ def get_tomorrows_avg_temp(owm: pyowm.OWM, coord_x: float, coord_y: float, from_
     """
     
     Arguments:
-        owm {[type]} -- [description]
+        owm {pyowm.OWM} -- [description]
+        coord_x {float} -- [description]
+        coord_y {float} -- [description]
     
     Keyword Arguments:
-        report {bool} -- [description] (default: {True})
+        from_hour24 {float} -- [description] (default: {6.0})
+        to_hour24 {float} -- [description] (default: {21.0})
     
     Returns:
-        [type] -- [description]
+        list -- [description]
     """    
-    # med: float = 0
-    # count: int = 0
     detailed_report: list = []
 
     current_date = datetime.date.today()
@@ -32,3 +33,24 @@ def get_tomorrows_avg_temp(owm: pyowm.OWM, coord_x: float, coord_y: float, from_
             # med += weather.get_temperature(unit='celsius')['temp'] 
 
     return detailed_report
+
+def get_todays_avg_temp(owm: pyowm.OWM, coord_x: float, coord_y: float)->float:
+    """
+    
+    Arguments:
+        owm {pyowm.OWM} -- [description]
+        coord_x {float} -- [description]
+        coord_y {float} -- [description]
+    
+    Keyword Arguments:
+        from_hour24 {float} -- [description] (default: {6.0})
+        to_hour24 {float} -- [description] (default: {21.0})
+    
+    Returns:
+        list -- [description]
+    """    
+    weather_obj = owm.weather_at_coords(coord_x, coord_y) 
+    weather = weather_obj.get_weather()
+    temperature = weather.get_temperature(unit='celsius')
+
+    return temperature['temp']

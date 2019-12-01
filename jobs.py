@@ -7,12 +7,9 @@ import os
 
 sched = BlockingScheduler()
 
-TODAYS_TEMPERATURE = 0
-
-@sched.scheduled_job('cron',  day_of_week='mon-fri, sun', hour='18', minute='02', timezone=default.TIMEZONE_STR)
+@sched.scheduled_job('cron',  day_of_week='mon-fri, sun', hour='10, 12', minute='05', timezone=default.TIMEZONE_STR)
 def query_weather():
-    global TODAYS_TEMPERATURE
-    TODAYS_TEMPERATURE = app.main(TODAYS_TEMPERATURE, heroku_mode=True)
+    app.main()
 
 
 if __name__ == '__main__':
