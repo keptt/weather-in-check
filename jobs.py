@@ -7,7 +7,7 @@ import os
 
 sched = BlockingScheduler()
 
-@sched.scheduled_job('cron',  day_of_week='mon-fri, sun', hour='10, 12', minute='05', timezone=default.TIMEZONE_STR)
+@sched.scheduled_job('cron',  day_of_week='mon-fri, sun', hour='17', minute='35', timezone=default.TIMEZONE_STR)
 def query_weather():
     app.main()
 
